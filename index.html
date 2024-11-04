@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Sports Assistant</title>
+    
+    <!-- Google Fonts - Using Inter for modern look -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- CSS Link -->
+    <link rel="stylesheet" href="css/styles.css">
+    
+    <!-- Firebase SDK -->
+    <script type="module" src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"></script>
+    <script type="module" src="js/firebase-config.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Your Sports Assistant</h1>
+        </header>
+
+        <!-- Sports Selection Tray -->
+        <div class="sports-tray">
+            <button class="sport-btn active">
+                <i class="fas fa-futbol"></i>
+                Football
+            </button>
+            <button class="sport-btn disabled">
+                <i class="fas fa-flag-checkered"></i>
+                Formula 1
+            </button>
+            <button class="sport-btn disabled">
+                <i class="fas fa-baseball-ball"></i>
+                Cricket
+            </button>
+            <button class="sport-btn disabled">
+                <i class="fas fa-basketball-ball"></i>
+                Basketball
+            </button>
+            <button class="sport-btn disabled">
+                <i class="fas fa-table-tennis"></i>
+                Tennis
+            </button>
+        </div>
+
+      
+<!-- League Selection -->
+<div class="league-selection">
+    <select id="leagueSelect">
+        <option value="PL" selected>Premier League</option>
+        <option value="PD">La Liga</option>
+        <option value="BL1">Bundesliga</option>
+        <option value="SA">Serie A</option>
+        <option value="FL1">Ligue 1</option>
+        <option value="CL">Champions League</option>
+        <option value="ELC">Championship</option>
+        <option value="PPL">Primeira Liga</option>
+        <option value="DED">Eredivisie</option>
+        <option value="BSA">Serie A Brazil</option>
+    </select>
+</div>
+
+       <!-- Date Navigation -->
+<div class="date-navigation">
+    <button class="nav-btn" id="prevDate">
+        <i class="fas fa-chevron-left"></i>
+    </button>
+    <div class="date-slider" id="dateSlider">
+        <!-- Dates will be inserted by JavaScript -->
+    </div>
+    <button class="nav-btn" id="nextDate">
+        <i class="fas fa-chevron-right"></i>
+    </button>
+</div>
+        
+        <!-- Matches Display -->
+        <main>
+            <div class="matches-container">
+                <!-- Matches will be loaded here -->
+                <div class="loading">Loading matches...</div>
+            </div>
+        </main>
+    </div>
+
+    <!-- JavaScript -->
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
