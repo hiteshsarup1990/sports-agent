@@ -128,7 +128,8 @@ async function fetchMatches(date) {
     const container = document.querySelector('.matches-container');
     container.innerHTML = '<div class="loading">Loading matches...</div>';
 
-    const cacheKey = `PL-${date}`;
+    // Define cacheKey here
+    const cacheKey = `PL-${date}`;  // Simplified cache key for Premier League
 
     try {
         // Check cache first
@@ -141,34 +142,38 @@ async function fetchMatches(date) {
 
         console.log('Making API request...');
         
-        // Direct API call without proxy
-        const baseUrl = `https://api.football-data.org/v4/competitions/PL/matches`;
+        // Use the exact endpoint that worked in Postman
+        let baseUrl = `https://api.football-data.org/v4/competitions/PL/matches`;
+        
         const params = new URLSearchParams({
             dateFrom: date,
             dateTo: date
         });
 
-        const url = `${baseUrl}?${params.toString()}`;
-        console.log('Request URL:', url);
+        baseUrl = `${baseUrl}?${params.toString()}`;
+        const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+        const url = proxyUrl + baseUrl;
 
+        console.log('Full Request URL:', url);
+        
         const response = await fetch(url, {
-            method: 'GET',
+            method: 'GET', // explicitly specify method
             headers: {
                 'X-Auth-Token': API_KEY,
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            mode: 'cors'  // Add CORS mode
+                'Origin': 'http://localhost:5500',
+                'Accept': 'application/json' // add Accept header
+            }
         });
 
         console.log('Response Status:', response.status);
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
+        // Log the raw response
+        const rawResponse = await response.text();
+        console.log('Raw Response:', rawResponse);
 
-        const data = await response.json();
-        console.log('API Response:', data);
+        // Parse the response
+        const data = JSON.parse(rawResponse);
+        console.log('Parsed API Response:', data);
 
         if (data.matches && Array.isArray(data.matches)) {
             console.log(`Found ${data.matches.length} matches for date:`, date);
@@ -180,7 +185,11 @@ async function fetchMatches(date) {
         }
 
     } catch (error) {
-        console.error('Fetch Error:', error);
+        console.error('Detailed Error Information:', {
+            message: error.message,
+            stack: error.stack,
+            type: error.name
+        });
         container.innerHTML = `<div class="error">
             <p>Error loading matches: ${error.message}</p>
             <p><small>Date: ${date}</small></p>
