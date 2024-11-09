@@ -1,9 +1,5 @@
-const API_KEY = '53c71f8053f145e29f1daf2fbeb355b0';
 
-// Cache for storing match data
-const matchesCache = new Map();
-
-// Updated leagues list based on football-data.org competition codes
+// Constants for the leagues
 const LEAGUES = {
     PL: 'Premier League',
     PD: 'La Liga',
@@ -17,18 +13,19 @@ const LEAGUES = {
     BSA: 'Serie A Brazil'
 };
 
+// Cache functions to store data locally
 function getCachedData(key) {
     try {
         const cached = localStorage.getItem(key);
         if (cached) {
             const { data, timestamp } = JSON.parse(cached);
+            // Cache valid for 1 hour (3600000 milliseconds)
             if (Date.now() - timestamp < 3600000) {
                 console.log('Found valid cache for:', key);
                 return data;
-            } else {
-                console.log('Cache expired for:', key);
-                localStorage.removeItem(key);
             }
+            console.log('Cache expired for:', key);
+            localStorage.removeItem(key);
         }
     } catch (error) {
         console.error('Cache error:', error);
@@ -49,6 +46,7 @@ function setCachedData(key, data) {
     }
 }
 
+// Function to generate date range for the slider (7 days before and after today)
 function getDateRange() {
     const dates = [];
     const today = new Date();
@@ -60,6 +58,7 @@ function getDateRange() {
     return dates;
 }
 
+// Date formatting functions
 function formatDate(date) {
     return date.toISOString().split('T')[0];
 }
@@ -69,6 +68,7 @@ function formatDisplayDate(date) {
     return date.toLocaleDateString('en-US', options);
 }
 
+// Initialize the date slider with clickable dates
 function initializeDateSlider() {
     console.log('Initializing date slider');
     const dateSlider = document.getElementById('dateSlider');
@@ -103,6 +103,8 @@ function initializeDateSlider() {
         dateSlider.appendChild(dateBtn);
     });
 }
+
+// Initialize navigation buttons for date slider
 function initializeNavButtons() {
     console.log('Initializing navigation buttons');
     const prevBtn = document.getElementById('prevDate');
@@ -123,13 +125,14 @@ function initializeNavButtons() {
     });
 }
 
+// Main function to fetch matches from the API
 async function fetchMatches(date) {
     console.log('Starting to fetch matches for date:', date);
     const container = document.querySelector('.matches-container');
     container.innerHTML = '<div class="loading">Loading matches...</div>';
 
-    // Define cacheKey here
-    const cacheKey = `PL-${date}`;  // Simplified cache key for Premier League
+    const selectedLeague = document.getElementById('leagueSelect').value;
+    const cacheKey = `${selectedLeague}-${date}`;
 
     try {
         // Check cache first
@@ -142,42 +145,20 @@ async function fetchMatches(date) {
 
         console.log('Making API request...');
         
-        // Use the exact endpoint that worked in Postman
-        let baseUrl = `https://api.football-data.org/v4/competitions/PL/matches`;
+        // Use Netlify function
+        const endpoint = `competitions/${selectedLeague}/matches?dateFrom=${date}&dateTo=${date}`;
+        const response = await fetch(`/.netlify/functions/fetch-matches?endpoint=${encodeURIComponent(endpoint)}`);
         
-        const params = new URLSearchParams({
-            dateFrom: date,
-            dateTo: date
-        });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
 
-        baseUrl = `${baseUrl}?${params.toString()}`;
-        const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
-        const url = proxyUrl + baseUrl;
-
-        console.log('Full Request URL:', url);
-        
-        const response = await fetch(url, {
-            method: 'GET', // explicitly specify method
-            headers: {
-                'X-Auth-Token': API_KEY,
-                'Origin': 'http://localhost:5500',
-                'Accept': 'application/json' // add Accept header
-            }
-        });
-
-        console.log('Response Status:', response.status);
-
-        // Log the raw response
-        const rawResponse = await response.text();
-        console.log('Raw Response:', rawResponse);
-
-        // Parse the response
-        const data = JSON.parse(rawResponse);
-        console.log('Parsed API Response:', data);
+        const data = await response.json();
+        console.log('API Response:', data);
 
         if (data.matches && Array.isArray(data.matches)) {
             console.log(`Found ${data.matches.length} matches for date:`, date);
-            matchesCache.set(cacheKey, data.matches);
+            setCachedData(cacheKey, data.matches);
             displayMatches(data.matches);
         } else {
             console.log('No matches array in response:', data);
@@ -185,18 +166,16 @@ async function fetchMatches(date) {
         }
 
     } catch (error) {
-        console.error('Detailed Error Information:', {
-            message: error.message,
-            stack: error.stack,
-            type: error.name
-        });
+        console.error('Error fetching matches:', error);
         container.innerHTML = `<div class="error">
             <p>Error loading matches: ${error.message}</p>
             <p><small>Date: ${date}</small></p>
-            <p><small>League: Premier League</small></p>
+            <p><small>League: ${LEAGUES[selectedLeague]}</small></p>
         </div>`;
     }
 }
+
+// Function to display matches in the UI
 function displayMatches(matches) {
     console.log('Displaying matches:', matches);
     const container = document.querySelector('.matches-container');
@@ -236,6 +215,7 @@ function displayMatches(matches) {
     container.innerHTML = matchesHTML;
 }
 
+// Function to convert API status codes to display text
 function getMatchStatus(status) {
     const statusMap = {
         SCHEDULED: 'Not Started',
@@ -250,13 +230,13 @@ function getMatchStatus(status) {
     return statusMap[status] || status;
 }
 
-// League selection handler
+// Event listener for league selection
 document.getElementById('leagueSelect').addEventListener('change', (e) => {
     const selectedDate = document.querySelector('.date-btn.active')?.dataset.date || new Date().toISOString().split('T')[0];
     fetchMatches(selectedDate);
 });
 
-// Single initialization point
+// Initialize everything when the page loads
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM loaded - initializing components');
     initializeDateSlider();
